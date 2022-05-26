@@ -16,6 +16,7 @@ import { useRouter } from "next/router";
 import {
   useCollectionData,
   useDocumentData,
+  useCollection,
 } from "react-firebase-hooks/firestore";
 import {
   addDoc,
@@ -31,22 +32,27 @@ import getOtherEmail from "../../utils/getOtherEmail";
 import { useEffect, useState } from "react";
 import { async } from "@firebase/util";
 import { useRef } from "react";
+import getNickname from "../../utils/getNickname";
 
-const Topbar = ({ email }) => {
+const Topbar = ({ email, nickname }) => {
   return (
     <Flex bg="gray.100" h="81px" w="100%" align="center" p={5}>
       <Avatar src="" marginRight={3} />
-      <Heading size="lg">{email}</Heading>
+      <Flex direction="column">
+        <Heading size="lg">{nickname}</Heading>
+        <Text>{email}</Text>
+      </Flex>
     </Flex>
   );
 };
 
 const BottomBar = ({ id, user }) => {
   const [input, setInput] = useState("");
+  const [profile] = useCollectionData(collection(db, "users"));
 
   const sendMessage = async (e) => {
-    if (input.length === 0 ){
-      return
+    if (input.length === 0) {
+      return;
     }
     e.preventDefault(); //not to refresh everytime we click on send
     await addDoc(collection(db, "chat", id, "messages"), {
@@ -59,19 +65,19 @@ const BottomBar = ({ id, user }) => {
 
   return (
     <form>
-    <FormControl p={3}>
-      <Flex gap={3}>
-        <Input
-          placeholder="Type here boi"
-          autoComplete="off"
-          onChange={(e) => setInput(e.target.value)}
-          value={input}
-        />
-        <Button type="submit" bgColor="red.300" onClick={sendMessage}>
-          Send
-        </Button>
-      </Flex>
-    </FormControl>
+      <FormControl p={3}>
+        <Flex gap={3}>
+          <Input
+            placeholder="Type here boi"
+            autoComplete="off"
+            onChange={(e) => setInput(e.target.value)}
+            value={input}
+          />
+          <Button type="submit" bgColor="red.300" onClick={sendMessage}>
+            Send
+          </Button>
+        </Flex>
+      </FormControl>
     </form>
   );
 };
@@ -84,6 +90,7 @@ export default function Chat() {
 
   const q = query(collection(db, `chat/${id}/messages`), orderBy("timestamp"));
   const [messages, loading] = useCollectionData(q);
+  const [profile] = useCollectionData(collection(db, "users"));
   const bottomOfChat = useRef();
 
   const Getmessages = () => {
@@ -101,23 +108,30 @@ export default function Chat() {
       <Flex
         key={Math.random()}
         alignSelf={msg.sender == user.email ? "flex-end" : "flex-start"}
-        bg={msg.sender == user.email ? "green.100" : "blue.100"}
-        w="fit-content"
-        // minWidth="100px"
-        borderRadius="lg"
-        p={3}
-        m={1}
+        direction="column"
       >
-        <Text>{msg.text}</Text>
+        <Text alignSelf={msg.sender == user.email ? "flex-end" : "flex-start"} color="gray.500" fontSize="xs" m={1}>{msg.sender == user.email ? getNickname(profile,user.email) : getNickname(profile,msg.sender)}</Text>
+        <Flex
+        key = {Math.random()}
+          bg={msg.sender == user.email ? "green.100" : "blue.100"}
+          w="fit-content"
+          // minWidth="100px"
+          borderRadius="lg"
+          p={3}
+          m={1}
+        >
+          <Text>{msg.text}</Text>
+        </Flex>
       </Flex>
     ));
   };
 
   useEffect(() =>
-      bottomOfChat.current.scrollIntoView({
+    bottomOfChat.current.scrollIntoView({
       behavior: "smooth",
-      block: 'start',
-    }))
+      block: "start",
+    })
+  );
 
   return (
     <Flex h="100vh">
@@ -132,7 +146,10 @@ export default function Chat() {
         flex={1}
         direction="column"
       >
-        <Topbar email={getOtherEmail(chat?.users, user)} />
+        <Topbar
+          email={getOtherEmail(chat?.users, user)}
+          nickname={getNickname(profile, getOtherEmail(chat?.users, user))}
+        />
 
         <Flex
           flex={1}
