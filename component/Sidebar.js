@@ -1,24 +1,33 @@
-import { DeleteIcon, UnlockIcon } from "@chakra-ui/icons";
+import { DeleteIcon, SettingsIcon, UnlockIcon } from "@chakra-ui/icons";
 import {
   Avatar,
   Button,
   Flex,
   IconButton,
   Text,
-  ChakraProvider,
-  Center,
-  Spinner,
   Spacer,
 } from "@chakra-ui/react";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../firebaseconfig";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useCollection, useCollectionData } from "react-firebase-hooks/firestore";
-import { collection, addDoc, deleteDoc, doc } from "firebase/firestore";
+import {
+  useCollection,
+  useCollectionData,
+  useDocumentData,
+} from "react-firebase-hooks/firestore";
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  getDoc,
+} from "firebase/firestore";
 import getOtherEmail from "../utils/getOtherEmail";
 import { useRouter } from "next/router";
 import Swal from "sweetalert2";
 import getNickname from "../utils/getNickname";
+import Checknickname from "../utils/Checknickname";
 
 export default function Sidebar() {
   const [user] = useAuthState(auth);
@@ -63,6 +72,24 @@ export default function Sidebar() {
     }
   };
 
+  const reNickname = async () => {
+    const { value: nickname } = await Swal.fire({
+      title: "Enter you nickname",
+      input: "text",
+      inputLabel: "how we calling you?",
+      inputPlaceholder: "MarthCord",
+      showCancelButton: true,
+    });
+    if (!nickname) {
+      return;
+    }
+    if (nickname) {
+      await updateDoc(doc(db, "users", user.uid), {
+        nickname: nickname,
+      });
+    }
+  };
+
   const deleteChat = async (chat) => {
     Swal.fire({
       title: "Are you sure?",
@@ -94,7 +121,9 @@ export default function Sidebar() {
         >
           <Avatar src="" marginEnd="3" />
           <Flex direction="column">
-            <Text fontSize="lg" color="blue.500">{getNickname(profile , getOtherEmail(chat.users, user))}</Text>
+            <Text fontSize="lg" color="blue.500">
+              {getNickname(profile, getOtherEmail(chat.users, user))}
+            </Text>
             <Text fontSize="sm">{getOtherEmail(chat.users, user)}</Text>
           </Flex>
           <Spacer />
@@ -106,50 +135,63 @@ export default function Sidebar() {
         </Flex>
       ));
   };
+
   return (
-    <Flex
-      // bg="blue.100"
-      w="300px"
-      h="100vh"
-      borderEnd="1px solid"
-      borderColor="gray.200"
-      direction="column"
-    >
+    <>
+    <Checknickname uid={user.uid}/>
       <Flex
-        // bg="red.100"
-        h="81px"
-        w="100%"
-        align="center"
-        justifyContent="space-between"
-        borderBottom="1px solid"
+        // bg="blue.100"
+        w="300px"
+        h="100vh"
+        borderEnd="1px solid"
         borderColor="gray.200"
-        p={3}
+        direction="column"
       >
-        <Flex align="center">
-          <Avatar src={user.photoURL} marginEnd={3} />
-          <Text>{user.displayName}</Text>
+        <Flex
+          // bg="red.100"
+          h="81px"
+          w="100%"
+          align="center"
+          justifyContent="space-between"
+          borderBottom="1px solid"
+          borderColor="gray.200"
+          p={3}
+        >
+          <Flex align="center">
+            <Avatar src={user.photoURL} marginEnd={3} />
+            <Text>{user.displayName}</Text>
+          </Flex>
+
+          <Flex>
+            <IconButton
+              size="sm"
+              isRound
+              icon={<SettingsIcon />}
+              onClick={() => reNickname()}
+            />
+            <IconButton
+              marginStart={2}
+              size="sm"
+              isRound
+              icon={<UnlockIcon />}
+              onClick={() => signOut(auth).then(redirectBack())}
+            />
+          </Flex>
         </Flex>
 
-        <IconButton
-          size="sm"
-          isRound
-          icon={<UnlockIcon />}
-          onClick={() => signOut(auth).then(redirectBack())}
-        />
-      </Flex>
+        <Button m={5} p={4} onClick={() => newChat()}>
+          New Chat +
+        </Button>
 
-      <Button m={5} p={4} onClick={() => newChat()}>
-        New Chat +
-      </Button>
-
-      <Flex
-        overflowX="scroll"
-        direction="column"
-        className="hideScroll"
-        flex={1}
-      >
-        <ChatList />
+        <Flex
+          overflowX="scroll"
+          direction="column"
+          className="hideScroll"
+          flex={1}
+        >
+          <ChatList />
+        </Flex>
       </Flex>
-    </Flex>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { Button , Stack } from "@chakra-ui/react"
 import { useSignInWithGoogle } from "react-firebase-hooks/auth"
 import { auth } from "../firebaseconfig"
 
+
 export default function Login() {
     const [signInWithGoogle, user, loading, error] = useSignInWithGoogle(auth);
   return (

@@ -24,6 +24,7 @@ import {
   doc,
   orderBy,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../firebaseconfig";
 import { query } from "firebase/firestore";
@@ -51,10 +52,10 @@ const BottomBar = ({ id, user }) => {
   const [profile] = useCollectionData(collection(db, "users"));
 
   const sendMessage = async (e) => {
-    if (input.length === 0) {
+    e.preventDefault(); //not to refresh everytime we click on send
+    if (!input) {
       return;
     }
-    e.preventDefault(); //not to refresh everytime we click on send
     await addDoc(collection(db, "chat", id, "messages"), {
       text: input,
       sender: user.email,
