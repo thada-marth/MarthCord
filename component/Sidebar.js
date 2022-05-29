@@ -35,7 +35,6 @@ export default function Sidebar() {
   const [profile] = useCollectionData(collection(db, "users"));
   const chats = snapshot?.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const router = useRouter();
-
   const redirect = (id) => {
     router.push(`/chat/${id}`);
   };
@@ -76,7 +75,7 @@ export default function Sidebar() {
     const { value: nickname } = await Swal.fire({
       title: "Enter you nickname",
       input: "text",
-      inputLabel: "how we calling you?",
+      inputLabel: "Your nickname : "+getNickname(profile,user.email),
       inputPlaceholder: "MarthCord",
       showCancelButton: true,
     });
@@ -138,7 +137,7 @@ export default function Sidebar() {
 
   return (
     <>
-    <Checknickname uid={user.uid}/>
+    <Checknickname uid={user?.uid} email={user?.email}/>
       <Flex
         // bg="blue.100"
         w="300px"
@@ -158,8 +157,8 @@ export default function Sidebar() {
           p={3}
         >
           <Flex align="center">
-            <Avatar src={user.photoURL} marginEnd={3} />
-            <Text>{user.displayName}</Text>
+            <Avatar src={user?.photoURL} marginEnd={3} />
+            <Text>{getNickname(profile,user?.email)}</Text>
           </Flex>
 
           <Flex>
